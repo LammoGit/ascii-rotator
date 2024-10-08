@@ -2,6 +2,7 @@
 #include <format>
 #include <math.h>
 #include <string>
+#include <vector>
 
 template <typename T>
 concept Scalar = std::integral<T> || std::floating_point<T>;
@@ -102,10 +103,11 @@ class Vertice {
 		operator std::string() const { return std::format("({}, {}, {})", x, y, z); }
 };
 
-class Mesh() {
+class Mesh {
 	public:
 		std::vector<std::vector<size_t>> faces;
 		std::vector<Vertice> vertices;
+
 		Mesh() {}
 		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<size_t>> faces) : vertices{vertices}, faces{faces} {}
 		
@@ -120,7 +122,7 @@ class Camera {
 	private:
 		Vertice psi, phi;
 		Vertice position, direction;
-		double half_width, half_height;
+		double half_width, half_height, focus;
 		int width;
 	public:
 		Camera() {}
@@ -134,6 +136,10 @@ class Camera {
 			set_direction(direction);
 			
 		}
+		
+		const double &get_focus() { return this->focus; }
+		const Vertice &get_position() { return this->position; }
+		const Vertice &get_direction() { return this->direction; }
 
 		void set_direction(const Vertice direction) {
 			if(direction.length() != 1) throw "Length of direction vector should be equal to 1";
@@ -153,13 +159,8 @@ class Camera {
 		}
 
 		int get_idx(const Vertice &vert) {
-			const int x = static_cast<int>(v * phi + half_width);
-			const int y = width * static_cast<int>(v * psi + half_height>;
+			const int x = static_cast<int>(vert * phi + half_width);
+			const int y = width * static_cast<int>(vert * psi + half_height);
 			return x + y;
-		}
-}
-
-int main() {
-	
-	return 0;
-}
+	}
+};
