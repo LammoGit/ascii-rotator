@@ -102,6 +102,20 @@ class Vertice {
 		operator std::string() const { return std::format("({}, {}, {})", x, y, z); }
 };
 
+class Mesh() {
+	public:
+		std::vector<std::vector<size_t>> faces;
+		std::vector<Vertice> vertices;
+		Mesh() {}
+		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<size_t>> faces) : vertices{vertices}, faces{faces} {}
+		
+		void rotate(const Vertice &rot) {
+			for(Vertice &vert : vertices) {
+				vert.rotate(rot);
+			}
+		}
+};
+
 int main() {
 	return 0;
 }
