@@ -1,0 +1,107 @@
+#include <span>
+#include <format>
+#include <math.h>
+#include <string>
+
+template <typename T>
+concept Scalar = std::integral<T> || std::floating_point<T>;
+
+double inverse_sqrt(const double x) {
+	return 1 / sqrt(x);
+}
+
+class Vertice {
+	public:
+		double x, y, z;
+		Vertice(const double x = 0, const double y = 0, const double z = 0) : x{x}, y{y}, z{z} {}
+		Vertice(const std::span<Scalar auto> &xyz) {
+			if(xyz.size() != 3) { throw format("Span of size {} was given when needed span of size 3.", xyz.size()); }
+		}
+		inline double length() const { return sqrt(x*x + y*y + z*z); }
+		inline double distance(const Vertice &vert) const { return sqrt(pow(x - vert.x, 2)  + pow(y - vert.y, 2)  + pow(z - vert.z, 2)); }
+		inline double cosine(const Vertice &vert) const { return (x*vert.x + y*vert.y + z*vert.z)*inverse_sqrt(square_length()*vert.square_length()); }
+		inline double project(const Vertice &vert) const { return (x*vert.x + y*vert.y + z*vert.z)*vert.inverse_length(); }
+
+		inline double square_length() const { return x*x + y*y + z*z; }
+		inline double inverse_length() const { return inverse_sqrt(x*x + y*y + z*z); }
+		inline double square_distance(const Vertice &vert) const { return pow(x - vert.x, 2)  + pow(y - vert.y, 2)  + pow(z - vert.z, 2); }
+		inline double inverse_distance(const Vertice &vert) const { return inverse_sqrt(distance(vert)); }
+
+		void rotate(const Vertice &rot) {
+			double sx = std::sin(rot.x);
+			double sy = std::sin(rot.y);
+			double sz = std::sin(rot.z);
+
+			double cx = std::cos(rot.x);	
+			double cy = std::cos(rot.y);
+			double cz = std::cos(rot.z);
+			
+			double x0 = x;
+			double y0 = y;
+			double z0 = z;
+			
+			x = x0*cy*cz + y0*(sx*sy*cz-cx*sz) + z0*(cx*sy*cz+sx*sz);
+			y = x0*cy*sz + y0*(sx*sy*sz+cx*cz) + z0*(cx*sy*sz-sx*cz);
+			z = -x0*sy + y0*sx*cy + z0*cx*cy;
+		}
+		Vertice rotated(const Vertice &rot) const {
+			Vertice vert = *this;
+			vert.rotate(rot);
+			return vert;
+		}
+
+		Vertice &operator+=(const Scalar auto &s) {
+			x += s;
+			y += s;
+			z += s;
+			return *this;
+		}
+		Vertice &operator-=(const Scalar auto &s) {
+			x -= s;
+			y -= s;
+			z -= s;
+			return *this;
+		}
+		Vertice &operator/=(const Scalar auto &s) {
+			double oos = 1/s;
+			x *= oos;
+			y *= oos;
+			z *= oos;
+			return *this;
+		}
+		Vertice &operator*=(const Scalar auto &s) {
+			x *= s;
+			y *= s;
+			z *= s;
+			return *this;
+		}
+
+		Vertice &operator+=(const Vertice &vert) {
+			x += vert.x;
+			y += vert.y;
+			z += vert.z;
+			return *this;
+		}
+		Vertice &operator-=(const Vertice &vert) {
+			x -= vert.x;
+			y -= vert.y;
+			z -= vert.z;
+			return *this;
+		}
+
+		Vertice operator+(const Scalar auto &s) const { return Vertice(x+s, y+s, z+s); }
+		Vertice operator-(const Scalar auto &s) const { return Vertice(x-s, y-s, z-s); }
+		Vertice operator/(const Scalar auto &s) const { double oos = 1/s; return Vertice(x*oos, y*oos, z*oos); }
+		Vertice operator*(const Scalar auto &s) const { return Vertice(x*s, y*s, z*s); }
+
+		Vertice operator+(const Vertice &vert) const { return Vertice(x+vert.x, y+vert.y, z+vert.z); }
+		Vertice operator-(const Vertice &vert) const { return Vertice(x-vert.x, y-vert.y, z-vert.z); }
+		double operator/(const Vertice &vert) const { return project(vert); }
+		double operator*(const Vertice &vert) const { return x*vert.x + y*vert.y + z*vert.z; }
+
+		operator std::string() const { return std::format("({}, {}, {})", x, y, z); }
+};
+
+int main() {
+	return 0;
+}
