@@ -116,6 +116,50 @@ class Mesh() {
 		}
 };
 
+class Camera {
+	private:
+		Vertice psi, phi;
+		Vertice position, direction;
+		double half_width, half_height;
+		int width;
+	public:
+		Camera() {}
+		Camera(const Vertice position, const Vertice direction, const int width, const int height, const double focus = 30) {
+			this->position = position;
+			this->width = width;
+			this->focus = focus;
+			this->half_width = width * 0.5;
+			this->half_height = height * 0.5;
+
+			set_direction(direction);
+			
+		}
+
+		void set_direction(const Vertice direction) {
+			if(direction.length() != 1) throw "Length of direction vector should be equal to 1";
+			this->direction = direction;
+			double sx, sy, cx, cy;
+			sy = -direction.x;
+			cy = std::sqrt(1 - direction.x * direction.x);
+			if(cy) {
+				sx = direction.y / cy;
+				cx = std::sqrt(1 - sx * sx);
+			} else {
+				sx = 0;
+				cx = 1;
+			}
+			this->phi = Vertice(cy, -sx*sy, -cx*sy);
+			this->psi = Vertice(0, -cx, sx) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
+		}
+
+		int get_idx(const Vertice &vert) {
+			const int x = static_cast<int>(v * phi + half_width);
+			const int y = width * static_cast<int>(v * psi + half_height>;
+			return x + y;
+		}
+}
+
 int main() {
+	
 	return 0;
 }
