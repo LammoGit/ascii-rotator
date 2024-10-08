@@ -33,9 +33,9 @@ class Vertice {
 			double sy = std::sin(rot.y);
 			double sz = std::sin(rot.z);
 
-			double cx = std::cos(rot.x);	
-			double cy = std::cos(rot.y);
-			double cz = std::cos(rot.z);
+			double cx = std::sqrt(1-sx*sx);	
+			double cy = std::sqrt(1-sy*sy);
+			double cz = std::sqrt(1-sz*sz);
 			
 			double x0 = x;
 			double y0 = y;
@@ -127,19 +127,18 @@ class Camera {
 	public:
 		Camera() {}
 		Camera(const Vertice position, const Vertice direction, const int width, const int height, const double focus = 30) {
-			this->position = position;
 			this->width = width;
 			this->focus = focus;
 			this->half_width = width * 0.5;
 			this->half_height = height * 0.5;
 
 			set_direction(direction);
-			
+			set_position(position);
 		}
 		
-		const double &get_focus() { return this->focus; }
-		const Vertice &get_position() { return this->position; }
-		const Vertice &get_direction() { return this->direction; }
+		const double &get_focus() const { return this->focus; }
+		const Vertice &get_position() const { return this->position; }
+		const Vertice &get_direction() const { return this->direction; }
 
 		void set_direction(const Vertice direction) {
 			if(direction.length() != 1) throw "Length of direction vector should be equal to 1";
@@ -158,8 +157,12 @@ class Camera {
 			this->psi = Vertice(0, -cx, sx) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
 		}
 
+		void set_position(const Vertice position) {
+			this->position = position;
+		}
+
 		int get_idx(const Vertice &vert) const {
-			Vertice r = vert - position;
+			Vertice r = vert - position; // radius vector
 			const double nr = r * direction;
 			if(nr <= 0) return -1;
 			r *= focus / nr;

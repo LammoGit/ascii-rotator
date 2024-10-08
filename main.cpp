@@ -46,7 +46,7 @@ class Screen {
 			memset(buff, ' ', size);
 			fill(buffZ, buffZ+size, numeric_limits<double>::infinity());
 
-			for(Mesh mesh : meshes) {
+			for(Mesh &mesh : meshes) {
 				draw_mesh(mesh);
 			}	
 		}
@@ -61,6 +61,7 @@ class Screen {
 		void draw_mesh(Mesh &mesh) {
 			double T, dt = 0.1;
 			Vertice k, v;
+
 			for(vector<size_t> &face : mesh.faces) {
 				for(size_t &i : face) {
 					const Vertice &v1 = mesh.vertices.at(i);
@@ -86,7 +87,7 @@ class Screen {
 		}
 
 		void rotate() {
-			for(Mesh& mesh : meshes) {
+			for(Mesh &mesh : meshes) {
 				mesh.rotate(rot);
 			}
 		}
