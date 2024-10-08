@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 template <typename T>
 concept Scalar = std::integral<T> || std::floating_point<T>;
@@ -12,6 +13,29 @@ double inverse_sqrt(const double x) {
 }
 
 class Vertice {
+	private:
+		const std::vector<double> &ascii_cache(const Vertice &rot) {
+			static std::unordered_map<Vertice, std::vector<double>, VerticeHash> cache;
+			if(cache.contains(rot)) { return cache[rot]; }
+			
+			const double sx = std::sin(rot.x);
+			const double sy = std::sin(rot.y);
+			const double sz = std::sin(rot.z);
+
+			const double cx = std::sqrt(1 - sx * sx);
+			const double cy = std::sqrt(1 - sy * sy);
+			const double cz = std::sqrt(1 - sz * sz);
+
+			cache[rot] = {cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz, cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz, -sy, sz*cy, cx*cy};
+			return cache[rot];
+		}
+		
+		class VerticeHash {
+			public:
+				std::size_t operator()(const Vertice &v) const {
+					return v.x + v.y*10+v.z*100;
+				}
+		};
 	public:
 		double x, y, z;
 		Vertice(const double x = 0, const double y = 0, const double z = 0) : x{x}, y{y}, z{z} {}
@@ -29,21 +53,15 @@ class Vertice {
 		inline double inverse_distance(const Vertice &vert) const { return inverse_sqrt(distance(vert)); }
 
 		void rotate(const Vertice &rot) {
-			double sx = std::sin(rot.x);
-			double sy = std::sin(rot.y);
-			double sz = std::sin(rot.z);
+			const std::vector<double> &k = ascii_cache(rot);
 
-			double cx = std::sqrt(1-sx*sx);	
-			double cy = std::sqrt(1-sy*sy);
-			double cz = std::sqrt(1-sz*sz);
-			
-			double x0 = x;
-			double y0 = y;
-			double z0 = z;
-			
-			x = x0*cy*cz + y0*(sx*sy*cz-cx*sz) + z0*(cx*sy*cz+sx*sz);
-			y = x0*cy*sz + y0*(sx*sy*sz+cx*cz) + z0*(cx*sy*sz-sx*cz);
-			z = -x0*sy + y0*sx*cy + z0*cx*cy;
+			const double x0 = x;
+			const double y0 = y;
+			const double z0 = z;
+
+			x = x0 * k[0] + y0 * k[1] + z0 * k[2];
+			y = x0 * k[3] + y0 * k[4] + z0 * k[5];
+			z = x0 * k[6] + y0 * k[7] + z0 * k[8];
 		}
 		Vertice rotated(const Vertice &rot) const {
 			Vertice vert = *this;
@@ -100,16 +118,18 @@ class Vertice {
 		double operator/(const Vertice &vert) const { return project(vert); }
 		double operator*(const Vertice &vert) const { return x*vert.x + y*vert.y + z*vert.z; }
 
+		bool operator==(const Vertice &vert) const { return x==vert.x && y == vert.y && z==vert.z; }
+		
 		operator std::string() const { return std::format("({}, {}, {})", x, y, z); }
 };
 
 class Mesh {
 	public:
-		std::vector<std::vector<size_t>> faces;
+		std::vector<std::vector<std::size_t>> faces;
 		std::vector<Vertice> vertices;
 
 		Mesh() {}
-		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<size_t>> faces) : vertices{vertices}, faces{faces} {}
+		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<std::size_t>> faces) : vertices{vertices}, faces{faces} {}
 		
 		void rotate(const Vertice &rot) {
 			for(Vertice &vert : vertices) {
