@@ -26,10 +26,10 @@ class Vertice {
 			const double cy = std::sqrt(1 - sy * sy);
 			const double cz = std::sqrt(1 - sz * sz);
 
-			cache[rot] = {cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz, cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz, -sy, sz*cy, cx*cy};
+			cache[rot] = {cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz, cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz, -sy, sx*cy, cx*cy};
 			return cache[rot];
 		}
-		
+
 		class VerticeHash {
 			public:
 				std::size_t operator()(const Vertice &v) const {
@@ -161,20 +161,19 @@ class Camera {
 		const Vertice &get_direction() const { return this->direction; }
 
 		void set_direction(const Vertice direction) {
-			if(direction.length() != 1) throw "Length of direction vector should be equal to 1";
-			this->direction = direction;
+			this->direction = direction/direction.length();
 			double sx, sy, cx, cy;
-			sy = -direction.x;
-			cy = std::sqrt(1 - direction.x * direction.x);
-			if(cy) {
-				sx = direction.y / cy;
-				cx = std::sqrt(1 - sx * sx);
+			sx = direction.y;
+			cx = std::sqrt(1-sx*sx);
+			if(cx) {
+				sy = direction.x/cx;
+				cy = -direction.z/cx;
 			} else {
-				sx = 0;
-				cx = 1;
+				sy = 0;
+				cy = 1;
 			}
-			this->phi = Vertice(cy, -sx*sy, -cx*sy);
-			this->psi = Vertice(0, -cx, sx) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
+			this->phi = Vertice(cy, 0, sy);
+			this->psi = Vertice(-sx*sy, cx, sx*cy) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
 		}
 
 		void set_position(const Vertice position) {
