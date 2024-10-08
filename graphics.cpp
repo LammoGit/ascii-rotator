@@ -158,9 +158,17 @@ class Camera {
 			this->psi = Vertice(0, -cx, sx) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
 		}
 
-		int get_idx(const Vertice &vert) {
-			const int x = static_cast<int>(vert * phi + half_width);
-			const int y = width * static_cast<int>(vert * psi + half_height);
+		int get_idx(const Vertice &vert) const {
+			Vertice r = vert - position;
+			const double nr = r * direction;
+			if(nr <= 0) return -1;
+			r *= focus / nr;
+			const int x = static_cast<int>(r * phi + half_width);
+			const int y = width * static_cast<int>(r * psi + half_height);
 			return x + y;
-	}
+		}
+
+		double distance(const Vertice &vert) const {
+			return position.square_distance(vert);
+		}
 };
