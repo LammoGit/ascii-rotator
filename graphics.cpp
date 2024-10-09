@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <ncurses.h>
 
 template <typename T>
 concept Scalar = std::integral<T> || std::floating_point<T>;
@@ -173,7 +174,7 @@ class Camera {
 				cy = 1;
 			}
 			this->phi = Vertice(cy, 0, sy);
-			this->psi = Vertice(-sx*sy, cx, sx*cy) * 0.5; // I divided psi by 2 because characters in terminal aren't squares
+			this->psi = Vertice(-sx*sy, cx, sx*cy); // I divided psi by 2 because characters in terminal aren't squares
 		}
 
 		void set_position(const Vertice position) {
@@ -185,9 +186,9 @@ class Camera {
 			const double nr = r * direction;
 			if(nr <= 0) return -1;
 			r *= focus / nr;
-			const int x = static_cast<int>(r * phi + half_width);
-			const int y = width * static_cast<int>(r * psi + half_height);
-			return x + y;
+			const int x = static_cast<int>(r.project(phi) + half_width);
+			const int y = width * static_cast<int>(r.project(psi) * 0.5 + half_height);
+			return (x < 0 || y < 0 || x >= width) ? -1 : x + y;
 		}
 
 		double distance(const Vertice &vert) const {

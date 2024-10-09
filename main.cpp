@@ -27,7 +27,7 @@ class Screen {
 			this->meshes.assign(meshes.begin(), meshes.end());
 			this->spf = 1.0/fps;
 			this->rot = rot * (this->spf * M_PI/180);
-			this->camera = Camera(Vertice(0, 0, 100), Vertice(0, -inverse_sqrt(2), -inverse_sqrt(2)), width, height, focus);
+			this->camera = Camera(Vertice(0, 0, 50), Vertice(0, 0, -1), width, height, focus);
 			this->size = height * width;
 
 			this->buff = new char[size];
@@ -56,6 +56,7 @@ class Screen {
 			if(idx < 0 || idx >= size) return;
 			if(buffZ[idx] < camera.distance(vert)) return;
 			buff[idx] = '#';
+			buffZ[idx] = camera.distance(vert);
 		}
 
 		void draw_mesh(Mesh &mesh) {
