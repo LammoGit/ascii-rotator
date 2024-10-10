@@ -83,7 +83,7 @@ class Vertice {
 			return *this;
 		}
 		Vertice &operator/=(const Scalar auto &s) {
-			double oos = 1/s;
+			const double oos = 1/s;
 			x *= oos;
 			y *= oos;
 			z *= oos;
@@ -144,11 +144,12 @@ class Camera {
 		Vertice psi, phi;
 		Vertice position, direction;
 		double half_width, half_height, focus;
-		int width;
+		int width, height;
 	public:
 		Camera() {}
 		Camera(const Vertice position, const Vertice direction, const int width, const int height, const double focus = 30) {
 			this->width = width;
+			this->height = height;
 			this->focus = focus;
 			this->half_width = width * 0.5;
 			this->half_height = height * 0.5;
@@ -174,7 +175,7 @@ class Camera {
 				cy = 1;
 			}
 			this->phi = Vertice(cy, 0, sy);
-			this->psi = Vertice(-sx*sy, cx, sx*cy); // I divided psi by 2 because characters in terminal aren't squares
+			this->psi = Vertice(-sx*sy, -cx, sx*cy);
 		}
 
 		void set_position(const Vertice position) {
@@ -187,8 +188,8 @@ class Camera {
 			if(nr <= 0) return -1;
 			r *= focus / nr;
 			const int x = static_cast<int>(r.project(phi) + half_width);
-			const int y = width * static_cast<int>(r.project(psi) * 0.5 + half_height);
-			return (x < 0 || y < 0 || x >= width) ? -1 : x + y;
+			const int y = static_cast<int>(r.project(psi) * 0.5 + half_height);
+			return (x < 0 || y < 0 || x >= width || y >= height) ? -1 : x + y * width;
 		}
 
 		double distance(const Vertice &vert) const {
