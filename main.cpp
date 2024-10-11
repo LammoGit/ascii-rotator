@@ -11,7 +11,7 @@ using namespace std;
 
 class Screen {
 	private:
-		vector<Mesh> meshes;
+		Mesh mesh;
 		Vertice rot;
 		Camera camera;
 		int width, height, size;
@@ -19,15 +19,15 @@ class Screen {
 		char *buff;
 
 	public:
-		Screen(const span<Mesh> meshes, const Vertice rot, const double fps = 60, const double focus = 30) {
+		Screen(const Mesh mesh, const Vertice rot, const double fps = 60, const double focus = 30) {
 			initscr();
 			refresh();
 			getmaxyx(stdscr, height, width);
 
-			this->meshes.assign(meshes.begin(), meshes.end());
+			this->mesh = mesh;
 			this->spf = 1.0/fps;
 			this->rot = rot * (this->spf * M_PI/180);
-			this->camera = Camera(Vertice(0, 50, 50), Vertice(0, -1, -1), width, height, focus);
+			this->camera = Camera(Vertice(0, 0, 50), Vertice(0, 0, -1), width, height, focus);
 			this->size = height * width;
 
 			this->buff = new char[size];
@@ -46,9 +46,7 @@ class Screen {
 			memset(buff, ' ', size);
 			fill(buffZ, buffZ+size, numeric_limits<double>::infinity());
 
-			for(Mesh &mesh : meshes) {
-				draw_mesh(mesh);
-			}	
+			draw_mesh(mesh);
 		}
 
 		void put(const Vertice &vert) {
@@ -87,19 +85,13 @@ class Screen {
 			}
 		}
 
-		void rotate() {
-			for(Mesh &mesh : meshes) {
-				mesh.rotate(rot);
-			}
-		}
-
 		void run() {
 			while(true) {
 				clear();
 				draw();
 				printw(buff);
 				refresh();
-				rotate();
+				mesh.rotate(rot);
 				sleep(spf);
 			}
 		}
@@ -125,7 +117,7 @@ Mesh create_pyramid(double size, Vertice pos) {
 }
 
 int main(int argc, char **argv){
-	vector<Mesh> meshes = vector<Mesh>{ create_cube(atof(argv[1]), {0, 0, 0}) };
+	Mesh mesh = create_cube(atof(argv[1]), {0, 0, 0});
 	Vertice rot = Vertice(atof(argv[2]), atof(argv[3]), atof(argv[4]));
-	Screen screen = Screen(meshes, rot, atof(argv[5]), atof(argv[6]));
+	Screen screen = Screen(mesh, rot, atof(argv[5]), atof(argv[6]));
 }
