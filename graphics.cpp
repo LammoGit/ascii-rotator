@@ -15,28 +15,15 @@ double inverse_sqrt(const double x) {
 
 class Vertice {
 	private:
-		const std::vector<double> &ascii_cache(const Vertice &rot) {
-			static std::unordered_map<Vertice, std::vector<double>, VerticeHash> cache;
-			if(cache.contains(rot)) { return cache[rot]; }
-			
-			const double sx = std::sin(rot.x);
-			const double sy = std::sin(rot.y);
-			const double sz = std::sin(rot.z);
-
-			const double cx = std::sqrt(1 - sx * sx);
-			const double cy = std::sqrt(1 - sy * sy);
-			const double cz = std::sqrt(1 - sz * sz);
-
-			cache[rot] = {cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz, cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz, -sy, sx*cy, cx*cy};
-			return cache[rot];
-		}
-
 		class VerticeHash {
 			public:
 				std::size_t operator()(const Vertice &v) const {
-					return v.x + v.y*10+v.z*100;
+					auto h = std::hash<double>();
+					return h(v.x) ^ h(v.y) ^ h(v.z);
 				}
 		};
+
+		inline static std::unordered_map<Vertice, std::vector<double>, VerticeHash> rot_cache;
 	public:
 		double x, y, z;
 		Vertice(const double x = 0, const double y = 0, const double z = 0) : x{x}, y{y}, z{z} {}
@@ -53,8 +40,23 @@ class Vertice {
 		inline double square_distance(const Vertice &vert) const { return pow(x - vert.x, 2)  + pow(y - vert.y, 2)  + pow(z - vert.z, 2); }
 		inline double inverse_distance(const Vertice &vert) const { return inverse_sqrt(distance(vert)); }
 
+		static const std::vector<double> &get_rotation(const Vertice &rot) {
+			if(rot_cache.contains(rot)) { return rot_cache[rot]; }
+			
+			const double sx = std::sin(rot.x);
+			const double sy = std::sin(rot.y);
+			const double sz = std::sin(rot.z);
+
+			const double cx = std::sqrt(1 - sx * sx);
+			const double cy = std::sqrt(1 - sy * sy);
+			const double cz = std::sqrt(1 - sz * sz);
+
+			rot_cache[rot] = {cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz, cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz, -sy, sx*cy, cx*cy};
+			return rot_cache[rot];
+		}
+
 		void rotate(const Vertice &rot) {
-			const std::vector<double> &k = ascii_cache(rot);
+			const std::vector<double> &k = get_rotation(rot);
 
 			const double x0 = x;
 			const double y0 = y;
@@ -64,9 +66,23 @@ class Vertice {
 			y = x0 * k[3] + y0 * k[4] + z0 * k[5];
 			z = x0 * k[6] + y0 * k[7] + z0 * k[8];
 		}
+		void rotate(const std::vector<double> &k) {
+			const double x0 = x;
+			const double y0 = y;
+			const double z0 = z;
+
+			x = x0 * k[0] + y0 * k[1] + z0 * k[2];
+			y = x0 * k[3] + y0 * k[4] + z0 * k[5];
+			z = x0 * k[6] + y0 * k[7] + z0 * k[8];		
+		}
 		Vertice rotated(const Vertice &rot) const {
 			Vertice vert = *this;
 			vert.rotate(rot);
+			return vert;
+		}
+		Vertice rotated(const std::vector<double> &k) const {
+			Vertice vert = *this;
+			vert.rotate(k);
 			return vert;
 		}
 
@@ -133,8 +149,9 @@ class Mesh {
 		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<std::size_t>> faces) : vertices{vertices}, faces{faces} {}
 		
 		void rotate(const Vertice &rot) {
+			const std::vector<double> &k = Vertice::get_rotation(rot);
 			for(Vertice &vert : vertices) {
-				vert.rotate(rot);
+				vert.rotate(k);
 			}
 		}
 };
