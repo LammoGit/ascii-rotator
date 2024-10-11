@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <ncurses.h>
+#include <stdexcept>
 
 template <typename T>
 concept Scalar = std::integral<T> || std::floating_point<T>;
@@ -14,26 +15,25 @@ double inverse_sqrt(const double x) {
 }
 
 class Vertice {
-	private:
-		class VerticeHash {
-			public:
-				std::size_t operator()(const Vertice &v) const {
-					auto h = std::hash<double>();
-					return h(v.x) ^ h(v.y) ^ h(v.z);
-				}
-		};
-
-		inline static std::unordered_map<Vertice, std::vector<double>, VerticeHash> rot_cache;
+	class VerticeHash {
+		public:
+			std::size_t operator()(const Vertice &v) const {
+				auto h = std::hash<double>();
+				return h(v.x) ^ h(v.y) ^ h(v.z);
+			}
+	};
+	inline static std::unordered_map<Vertice, std::vector<double>, VerticeHash> rot_cache;
 	public:
 		double x, y, z;
 		Vertice(const double x = 0, const double y = 0, const double z = 0) : x{x}, y{y}, z{z} {}
 		Vertice(const std::span<Scalar auto> &xyz) {
-			if(xyz.size() != 3) { throw format("Span of size {} was given when needed span of size 3.", xyz.size()); }
+			if(xyz.size() != 3) { throw std::runtime_error(format("Span of size {} was given when needed span of size 3.", xyz.size())); }
 		}
 		inline double length() const { return sqrt(x*x + y*y + z*z); }
 		inline double distance(const Vertice &vert) const { return sqrt(pow(x - vert.x, 2)  + pow(y - vert.y, 2)  + pow(z - vert.z, 2)); }
 		inline double cosine(const Vertice &vert) const { return (x*vert.x + y*vert.y + z*vert.z)*inverse_sqrt(square_length()*vert.square_length()); }
 		inline double project(const Vertice &vert) const { return (x*vert.x + y*vert.y + z*vert.z)*vert.inverse_length(); }
+		inline Vertice cross(const Vertice &vert) const { return Vertice(y*vert.z - z*vert.y, -x*vert.z+z*vert.x, x*vert.y-y*vert.x); }
 
 		inline double square_length() const { return x*x + y*y + z*z; }
 		inline double inverse_length() const { return inverse_sqrt(x*x + y*y + z*z); }
@@ -141,12 +141,28 @@ class Vertice {
 };
 
 class Mesh {
+	void check_face(const std::vector<size_t> &face) const{
+		if(face.size() == 3) return;
+		if(face.size() < 3) throw std::runtime_error("Face must have at least 3 vertices");
+		Vertice n = (vertices[face[1]] - vertices[face[0]]).cross(vertices[face[2]] - vertices[face[0]]);
+		n /= -(vertices[face[0]] * n);
+		for(size_t i=3;i<face.size();i++) {
+			if(vertices[face[i]] * n != -1) { 
+				throw std::runtime_error("Vertices are on different planes");
+			}
+		}
+	}	
 	public:
 		std::vector<std::vector<std::size_t>> faces;
 		std::vector<Vertice> vertices;
 
 		Mesh() {}
-		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<std::size_t>> faces) : vertices{vertices}, faces{faces} {}
+		Mesh(std::vector<Vertice> vertices, std::vector<std::vector<std::size_t>> faces) : vertices{vertices}, faces{faces} {
+			if(vertices.size() < 3) throw std::runtime_error("Mesh must have at least 3 vertices");
+			for(std::vector<std::size_t> &face : faces) {
+				check_face(face);
+			}
+		}
 		
 		void rotate(const Vertice &rot) {
 			const std::vector<double> &k = Vertice::get_rotation(rot);
@@ -157,11 +173,10 @@ class Mesh {
 };
 
 class Camera {
-	private:
-		Vertice psi, phi;
-		Vertice position, direction;
-		double half_width, half_height, focus;
-		int width, height;
+	Vertice psi, phi;
+	Vertice position, direction;
+	double half_width, half_height, focus;
+	int width, height;
 	public:
 		Camera() {}
 		Camera(const Vertice position, const Vertice direction, const int width, const int height, const double focus = 30) {
