@@ -27,7 +27,7 @@ Mesh create_pyramid(double size, Vertice pos) {
 }
 
 int main(int argc, char **argv){
-	Mesh mesh = create_pyramid(atof(argv[1]), {0, 0, 0});
+	Mesh mesh = create_cube(atof(argv[1]), {0, 0, 0});
 	Vertice rot = Vertice(atof(argv[2]), atof(argv[3]), atof(argv[4]));
 	Screen screen = Screen(mesh, rot, atof(argv[5]), atof(argv[6]));
 	screen.run();

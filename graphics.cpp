@@ -132,6 +132,8 @@ class Vertice {
 		double operator/(const Vertice &vert) const { return project(vert); }
 		double operator*(const Vertice &vert) const { return x*vert.x + y*vert.y + z*vert.z; }
 
+		Vertice operator-() const { return Vertice(-x, -y, -z); }
+
 		bool operator==(const Vertice &vert) const { return x==vert.x && y == vert.y && z==vert.z; }
 		
 		operator std::string() const { return std::format("({}, {}, {})", x, y, z); }
