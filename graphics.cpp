@@ -213,3 +213,14 @@ class Camera {
 			return position.square_distance(vert);
 		}
 };
+
+class LightPoint {
+  Vertice position;
+  double power;
+  public:
+    LightPoint(){};
+    LightPoint(Vertice position, double power) : power{power}, position{position} {}
+    double brightness(const Vertice &position) {
+      return power / this->position.distance(position);
+    }
+};
